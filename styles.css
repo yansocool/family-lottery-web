@@ -272,6 +272,36 @@ h2 {
   cursor: pointer;
 }
 
+.sync-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(47, 140, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.sync-pill[data-mode="online"] {
+  color: #0c7a4f;
+  background: rgba(224, 255, 241, 0.78);
+}
+
+.sync-pill[data-mode="syncing"] {
+  color: var(--blue-deep);
+  background: rgba(229, 243, 255, 0.86);
+}
+
+.sync-pill[data-mode="error"] {
+  color: var(--danger);
+  background: rgba(255, 233, 233, 0.86);
+}
+
 .layout {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr) 310px;
