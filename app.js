@@ -8,6 +8,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_Y12CyC_9Y8MKUBpLfaDivg_C9yQiTeS";
 const defaults = {
   currentPoolId: "sky-city",
   drawCredit: 0,
+  inventory: {},
   tasks: [
     {
       id: "task-sample-1",
@@ -163,15 +164,71 @@ function clone(value) {
 function loadState() {
   try {
     const raw = localStorage.getItem(storageKey);
-    if (!raw) return clone(defaults);
+    if (!raw) return normalizeState(clone(defaults));
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.pools) || parsed.pools.length === 0) return clone(defaults);
-    parsed.drawCredit = Math.max(0, Math.floor(Number(parsed.drawCredit) || 0));
-    if (!Array.isArray(parsed.tasks)) parsed.tasks = [];
-    return parsed;
+    if (!Array.isArray(parsed.pools) || parsed.pools.length === 0) return normalizeState(clone(defaults));
+    return normalizeState(parsed);
   } catch {
-    return clone(defaults);
+    return normalizeState(clone(defaults));
   }
+}
+
+function normalizeState(value) {
+  value.drawCredit = Math.max(0, Math.floor(Number(value.drawCredit) || 0));
+  if (!Array.isArray(value.tasks)) value.tasks = [];
+  if (!Array.isArray(value.history)) value.history = [];
+  if (!value.inventory || typeof value.inventory !== "object") value.inventory = {};
+  value.pools.forEach(pool => {
+    if (!Array.isArray(pool.items)) pool.items = [];
+    if (!value.inventory[pool.id]) value.inventory[pool.id] = {};
+    pool.items.forEach(item => {
+      item.stock = Math.max(0, Math.floor(Number(item.stock) || 0));
+      item.initialStock = Math.max(item.stock, Math.floor(Number(item.initialStock) || 0));
+      item.weight = Math.max(0, Number(item.weight) || 0);
+      if (value.inventory[pool.id][item.id] == null) value.inventory[pool.id][item.id] = 0;
+    });
+  });
+  if (!value.inventoryMigrated) {
+    migrateInventoryFromHistory(value);
+    value.inventoryMigrated = true;
+  }
+  if (!value.rareWeightsTuned) {
+    tuneRareWeights(value);
+    value.rareWeightsTuned = true;
+  }
+  return value;
+}
+
+function migrateInventoryFromHistory(value) {
+  value.history.forEach(entry => {
+    const pool = value.pools.find(candidate => candidate.name === entry.pool);
+    if (!pool) return;
+    const item = pool.items.find(candidate => candidate.name === entry.item);
+    if (!item) return;
+    value.inventory[pool.id][item.id] = Math.max(
+      Number(value.inventory[pool.id][item.id]) || 0,
+      1
+    );
+  });
+}
+
+function tuneRareWeights(value) {
+  const rareWeights = {
+    cheng: 0.05,
+    chu: 0.05,
+    pan: 0.05,
+    shi: 0.1,
+    ji: 0.05,
+    ke: 0.1
+  };
+  value.pools.forEach(pool => {
+    pool.items.forEach(item => {
+      if (!Object.hasOwn(rareWeights, item.id)) return;
+      if (Number(item.weight) <= Number(item.initialStock || item.stock || 0)) {
+        item.weight = rareWeights[item.id];
+      }
+    });
+  });
 }
 
 function persist() {
@@ -214,7 +271,7 @@ async function initCloud() {
     lastCloudUpdatedAt = data?.updated_at || "";
     if (isValidState(data?.data)) {
       applyingRemote = true;
-      state = data.data;
+      state = normalizeState(data.data);
       localStorage.setItem(storageKey, JSON.stringify(state));
       applyingRemote = false;
       render();
@@ -235,7 +292,7 @@ async function initCloud() {
           if (!payload.new?.data) return;
           lastCloudUpdatedAt = payload.new.updated_at || lastCloudUpdatedAt;
           applyingRemote = true;
-          state = payload.new.data;
+          state = normalizeState(payload.new.data);
           localStorage.setItem(storageKey, JSON.stringify(state));
           applyingRemote = false;
           render();
@@ -261,7 +318,7 @@ async function fetchCloudState() {
     if (error || !data?.updated_at || data.updated_at === lastCloudUpdatedAt || !isValidState(data.data)) return;
     lastCloudUpdatedAt = data.updated_at;
     applyingRemote = true;
-    state = data.data;
+    state = normalizeState(data.data);
     localStorage.setItem(storageKey, JSON.stringify(state));
     applyingRemote = false;
     render();
@@ -364,6 +421,31 @@ function probability(pool, item) {
   if (Number(item.stock) <= 0 || Number(item.weight) <= 0) return 0;
   const sum = getWeightSum(pool);
   return sum > 0 ? Number(item.weight) / sum : 0;
+}
+
+function getInventory(pool, item) {
+  return Math.max(0, Math.floor(Number(state.inventory?.[pool.id]?.[item.id]) || 0));
+}
+
+function addInventory(pool, item, amount = 1) {
+  if (!state.inventory || typeof state.inventory !== "object") state.inventory = {};
+  if (!state.inventory[pool.id]) state.inventory[pool.id] = {};
+  state.inventory[pool.id][item.id] = getInventory(pool, item) + amount;
+}
+
+function spendInventory(pool, item, amount = 1) {
+  if (!state.inventory?.[pool.id]) return;
+  state.inventory[pool.id][item.id] = Math.max(0, getInventory(pool, item) - amount);
+}
+
+function getRequiredItems(pool) {
+  const seen = new Set();
+  return pool.items.filter(item => {
+    const key = item.name;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function addPool() {
@@ -476,7 +558,9 @@ function updateItem(id, key, value) {
   if (key === "name") {
     item.name = value.trim() || "未命名";
   } else {
-    const number = Math.max(0, Math.floor(Number(value) || 0));
+    const number = key === "weight"
+      ? Math.max(0, Number(value) || 0)
+      : Math.max(0, Math.floor(Number(value) || 0));
     item[key] = number;
     if (key === "initialStock" && item.stock > number) item.stock = number;
   }
@@ -522,6 +606,7 @@ function drawMany(count) {
     const result = drawOne();
     if (!result) break;
     state.drawCredit = Math.max(0, (Number(state.drawCredit) || 0) - 1);
+    addInventory(pool, result, 1);
     results.push(result.name);
     state.history.unshift({
       pool: pool.name,
@@ -558,7 +643,7 @@ function clearHistory() {
 function resetAll() {
   if (!isAdmin()) return;
   if (!confirm("恢复默认会覆盖当前所有奖池配置，确定？")) return;
-  state = clone(defaults);
+  state = normalizeState(clone(defaults));
   persist();
   drawResult.textContent = "待抽取";
   render();
@@ -584,7 +669,7 @@ function importConfig(event) {
     try {
       const data = JSON.parse(String(reader.result));
       if (!Array.isArray(data.pools) || !data.pools.length) throw new Error("bad config");
-      state = data;
+      state = normalizeState(data);
       persist();
       render();
     } catch {
@@ -598,17 +683,15 @@ function importConfig(event) {
 
 function redeemCurrentPool() {
   const pool = getCurrentPool();
-  const required = [...new Set(pool.name.split("").filter(Boolean))];
-  const missing = required.filter(char => {
-    const item = pool.items.find(entry => entry.name === char);
-    return !item || Number(item.initialStock) - Number(item.stock) <= 0;
-  });
+  const required = getRequiredItems(pool);
+  const missing = required.filter(item => getInventory(pool, item) <= 0).map(item => item.name);
   if (missing.length) {
     drawResult.textContent = `还缺 ${missing.join(" ")}`;
     ticketWindow.classList.remove("spin");
     requestAnimationFrame(() => ticketWindow.classList.add("spin"));
     return;
   }
+  required.forEach(item => spendInventory(pool, item, 1));
   state.history.unshift({
     pool: "兑奖申请",
     item: pool.name,
@@ -653,7 +736,7 @@ function renderEditor() {
     tr.innerHTML = `
       <td><input aria-label="条目名称" value="${escapeHtml(item.name)}"></td>
       <td><input class="number-input" aria-label="库存" type="number" min="0" value="${item.stock}"></td>
-      <td><input class="number-input" aria-label="权重" type="number" min="0" value="${item.weight}"></td>
+      <td><input class="number-input" aria-label="权重" type="number" min="0" step="0.01" value="${item.weight}"></td>
       <td>
         <div class="probability">
           <strong>${(chance * 100).toFixed(2)}%</strong>
