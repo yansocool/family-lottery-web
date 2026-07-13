@@ -559,13 +559,23 @@ function updateItem(id, key, value) {
     item.name = value.trim() || "未命名";
   } else {
     const number = key === "weight"
-      ? Math.max(0, Number(value) || 0)
-      : Math.max(0, Math.floor(Number(value) || 0));
+      ? Math.max(0, parseDecimal(value))
+      : Math.max(0, Math.floor(parseDecimal(value)));
     item[key] = number;
     if (key === "initialStock" && item.stock > number) item.stock = number;
   }
   persist();
   render();
+}
+
+function parseDecimal(value) {
+  const normalized = String(value)
+    .trim()
+    .replaceAll("，", ".")
+    .replaceAll(",", ".")
+    .replaceAll("。", ".");
+  const number = Number.parseFloat(normalized);
+  return Number.isFinite(number) ? number : 0;
 }
 
 function removeItem(id) {
@@ -736,7 +746,7 @@ function renderEditor() {
     tr.innerHTML = `
       <td><input aria-label="条目名称" value="${escapeHtml(item.name)}"></td>
       <td><input class="number-input" aria-label="库存" type="number" min="0" value="${item.stock}"></td>
-      <td><input class="number-input" aria-label="权重" type="number" min="0" step="0.01" value="${item.weight}"></td>
+      <td><input class="number-input" aria-label="权重" type="text" inputmode="decimal" value="${item.weight}"></td>
       <td>
         <div class="probability">
           <strong>${(chance * 100).toFixed(2)}%</strong>
