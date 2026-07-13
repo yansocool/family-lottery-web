@@ -89,6 +89,7 @@ let selectedRole = "brother";
 let cloud = null;
 let applyingRemote = false;
 let saveTimer = null;
+let lastCloudUpdatedAt = "";
 
 const passwordHashes = {
   admin: "3e20173ad793d17dbe43b5e9aae1423bc44677b3ba003046058f6aadc61ce27d",
@@ -206,10 +207,11 @@ async function initCloud() {
     setSyncStatus("同步中", "syncing");
     const { data, error } = await cloud
       .from("lottery_state")
-      .select("data")
+      .select("data, updated_at")
       .eq("id", cloudRowId)
       .maybeSingle();
     if (error) throw error;
+    lastCloudUpdatedAt = data?.updated_at || "";
     if (isValidState(data?.data)) {
       applyingRemote = true;
       state = data.data;
@@ -217,9 +219,12 @@ async function initCloud() {
       applyingRemote = false;
       render();
     } else {
-      await cloud
+      const { data: inserted } = await cloud
         .from("lottery_state")
-        .upsert({ id: cloudRowId, data: state, updated_at: new Date().toISOString() });
+        .upsert({ id: cloudRowId, data: state, updated_at: new Date().toISOString() })
+        .select("updated_at")
+        .single();
+      lastCloudUpdatedAt = inserted?.updated_at || lastCloudUpdatedAt;
     }
     cloud
       .channel("lottery-state")
@@ -228,6 +233,7 @@ async function initCloud() {
         { event: "*", schema: "public", table: "lottery_state", filter: `id=eq.${cloudRowId}` },
         payload => {
           if (!payload.new?.data) return;
+          lastCloudUpdatedAt = payload.new.updated_at || lastCloudUpdatedAt;
           applyingRemote = true;
           state = payload.new.data;
           localStorage.setItem(storageKey, JSON.stringify(state));
@@ -236,10 +242,31 @@ async function initCloud() {
         }
       )
       .subscribe();
+    setInterval(fetchCloudState, 3000);
     setSyncStatus("云同步", "online");
   } catch (error) {
     console.error(error);
     setSyncStatus("同步失败", "error");
+  }
+}
+
+async function fetchCloudState() {
+  if (!cloud || applyingRemote) return;
+  try {
+    const { data, error } = await cloud
+      .from("lottery_state")
+      .select("data, updated_at")
+      .eq("id", cloudRowId)
+      .maybeSingle();
+    if (error || !data?.updated_at || data.updated_at === lastCloudUpdatedAt || !isValidState(data.data)) return;
+    lastCloudUpdatedAt = data.updated_at;
+    applyingRemote = true;
+    state = data.data;
+    localStorage.setItem(storageKey, JSON.stringify(state));
+    applyingRemote = false;
+    render();
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -253,14 +280,17 @@ async function saveCloudNow() {
   if (!cloud) return;
   try {
     setSyncStatus("保存中", "syncing");
-    const { error } = await cloud
+    const { data, error } = await cloud
       .from("lottery_state")
       .upsert({
         id: cloudRowId,
         data: state,
         updated_at: new Date().toISOString()
-      });
+      })
+      .select("updated_at")
+      .single();
     if (error) throw error;
+    lastCloudUpdatedAt = data?.updated_at || lastCloudUpdatedAt;
     setSyncStatus("云同步", "online");
   } catch (error) {
     console.error(error);
