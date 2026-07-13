@@ -1,4 +1,9 @@
 const storageKey = "family-lottery-console-v1";
+const cloudRowId = "main";
+
+// Fill these after creating the Supabase project.
+const SUPABASE_URL = "";
+const SUPABASE_ANON_KEY = "";
 
 const defaults = {
   currentPoolId: "sky-city",
@@ -81,6 +86,9 @@ const defaults = {
 let state = loadState();
 let sessionRole = sessionStorage.getItem("lottery-role") || "";
 let selectedRole = "brother";
+let cloud = null;
+let applyingRemote = false;
+let saveTimer = null;
 
 const passwordHashes = {
   admin: "3e20173ad793d17dbe43b5e9aae1423bc44677b3ba003046058f6aadc61ce27d",
@@ -106,6 +114,7 @@ const logoutBtn = document.querySelector("#logoutBtn");
 const passwordInput = document.querySelector("#passwordInput");
 const loginError = document.querySelector("#loginError");
 const roleLabel = document.querySelector("#roleLabel");
+const syncStatus = document.querySelector("#syncStatus");
 
 document.querySelector("#addPoolBtn").addEventListener("click", addPool);
 document.querySelector("#deletePoolBtn").addEventListener("click", deletePool);
@@ -166,6 +175,88 @@ function loadState() {
 
 function persist() {
   localStorage.setItem(storageKey, JSON.stringify(state));
+  queueCloudSave();
+}
+
+function cloudConfigured() {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+}
+
+function setSyncStatus(text, mode = "local") {
+  syncStatus.textContent = text;
+  syncStatus.dataset.mode = mode;
+}
+
+async function initCloud() {
+  if (!cloudConfigured()) {
+    setSyncStatus("本地模式", "local");
+    return;
+  }
+  try {
+    cloud = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    setSyncStatus("同步中", "syncing");
+    const { data, error } = await cloud
+      .from("lottery_state")
+      .select("data")
+      .eq("id", cloudRowId)
+      .maybeSingle();
+    if (error) throw error;
+    if (data?.data) {
+      applyingRemote = true;
+      state = data.data;
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      applyingRemote = false;
+      render();
+    } else {
+      await cloud
+        .from("lottery_state")
+        .insert({ id: cloudRowId, data: state });
+    }
+    cloud
+      .channel("lottery-state")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "lottery_state", filter: `id=eq.${cloudRowId}` },
+        payload => {
+          if (!payload.new?.data) return;
+          applyingRemote = true;
+          state = payload.new.data;
+          localStorage.setItem(storageKey, JSON.stringify(state));
+          applyingRemote = false;
+          render();
+        }
+      )
+      .subscribe();
+    setSyncStatus("云同步", "online");
+  } catch (error) {
+    console.error(error);
+    setSyncStatus("同步失败", "error");
+  }
+}
+
+function queueCloudSave() {
+  if (applyingRemote || !cloud) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveCloudNow, 350);
+}
+
+async function saveCloudNow() {
+  if (!cloud) return;
+  try {
+    setSyncStatus("保存中", "syncing");
+    const { error } = await cloud
+      .from("lottery_state")
+      .upsert({
+        id: cloudRowId,
+        data: state,
+        updated_at: new Date().toISOString()
+      });
+    if (error) throw error;
+    setSyncStatus("云同步", "online");
+  } catch (error) {
+    console.error(error);
+    setSyncStatus("同步失败", "error");
+  }
 }
 
 function isAdmin() {
@@ -602,3 +693,4 @@ function render() {
 }
 
 render();
+initCloud();
