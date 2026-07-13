@@ -2,8 +2,8 @@ const storageKey = "family-lottery-console-v1";
 const cloudRowId = "main";
 
 // Fill these after creating the Supabase project.
-const SUPABASE_URL = "";
-const SUPABASE_ANON_KEY = "";
+const SUPABASE_URL = "https://ifgipldyqurefdtwhqdd.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_Y12CyC_9Y8MKUBpLfaDivg_C9yQiTeS";
 
 const defaults = {
   currentPoolId: "sky-city",
@@ -182,6 +182,15 @@ function cloudConfigured() {
   return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
 }
 
+function isValidState(value) {
+  return Boolean(
+    value &&
+    Array.isArray(value.pools) &&
+    value.pools.length > 0 &&
+    value.pools.every(pool => pool && Array.isArray(pool.items))
+  );
+}
+
 function setSyncStatus(text, mode = "local") {
   syncStatus.textContent = text;
   syncStatus.dataset.mode = mode;
@@ -201,7 +210,7 @@ async function initCloud() {
       .eq("id", cloudRowId)
       .maybeSingle();
     if (error) throw error;
-    if (data?.data) {
+    if (isValidState(data?.data)) {
       applyingRemote = true;
       state = data.data;
       localStorage.setItem(storageKey, JSON.stringify(state));
@@ -210,7 +219,7 @@ async function initCloud() {
     } else {
       await cloud
         .from("lottery_state")
-        .insert({ id: cloudRowId, data: state });
+        .upsert({ id: cloudRowId, data: state, updated_at: new Date().toISOString() });
     }
     cloud
       .channel("lottery-state")
