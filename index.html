@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>家庭奖池抽奖台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <p class="eyebrow">家庭任务抽奖</p>
+      <h1>选择身份登录</h1>
+      <div class="role-picker" aria-label="选择身份">
+        <button class="role-card active" data-role="brother" type="button">
+          <strong>我是弟弟</strong>
+          <span>看任务、抽奖、兑奖</span>
+        </button>
+        <button class="role-card" data-role="admin" type="button">
+          <strong>我是哥哥</strong>
+          <span>发布任务、调奖池、管次数</span>
+        </button>
+      </div>
+      <label class="password-row">
+        <span>密码</span>
+        <input id="passwordInput" type="password" autocomplete="current-password" placeholder="输入密码">
+      </label>
+      <p class="login-error" id="loginError"></p>
+      <button class="primary login-btn" id="loginBtn" type="button">进入</button>
+    </div>
+  </section>
+
+  <main class="app">
+    <section class="topbar" aria-label="奖池控制台">
+      <div>
+        <p class="eyebrow" id="roleLabel">可调概率 · 可加奖池 · 本地保存</p>
+        <h1>家庭任务抽奖台</h1>
+      </div>
+      <div class="top-actions">
+        <button class="ghost admin-only" id="exportBtn" type="button">导出配置</button>
+        <label class="ghost file-btn admin-only">
+          导入配置
+          <input id="importFile" type="file" accept="application/json">
+        </label>
+        <button class="danger admin-only" id="resetAllBtn" type="button">恢复默认</button>
+        <button class="ghost" id="logoutBtn" type="button">退出登录</button>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="sidebar">
+        <div class="section-head">
+          <h2>奖池</h2>
+          <button id="addPoolBtn" class="admin-only" type="button" title="新增奖池">+</button>
+        </div>
+        <div id="poolList" class="pool-list"></div>
+      </aside>
+
+      <section class="stage">
+        <div class="pool-editor">
+          <div class="pool-title-row">
+            <input id="poolNameInput" class="pool-title-input" aria-label="奖池名称">
+            <button id="deletePoolBtn" class="danger small admin-only" type="button">删除奖池</button>
+          </div>
+          <div class="stats-grid admin-only">
+            <div>
+              <span>剩余</span>
+              <strong id="remainingCount">0</strong>
+            </div>
+            <div>
+              <span>总权重</span>
+              <strong id="totalWeight">0</strong>
+            </div>
+            <div>
+              <span>可抽种类</span>
+              <strong id="activeItemCount">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="draw-panel">
+          <div class="ticket-window" id="ticketWindow">
+            <span id="drawResult">待抽取</span>
+          </div>
+          <div class="draw-actions">
+            <div class="draw-credit">
+              <span>可抽次数</span>
+              <strong id="drawCredit">0</strong>
+            </div>
+            <button id="drawOneBtn" class="primary" type="button">抽 1 次</button>
+            <button id="drawTenBtn" type="button">抽 10 次</button>
+            <div class="credit-tools">
+              <button id="minusCreditBtn" class="admin-only" type="button">-1 次</button>
+              <button id="plusCreditBtn" class="admin-only" type="button">+1 次</button>
+            </div>
+            <button id="redeemBtn" class="primary" type="button">申请兑奖</button>
+            <button id="resetPoolBtn" class="admin-only" type="button">重置本奖池库存</button>
+          </div>
+        </div>
+
+        <div class="tasks-card">
+          <div class="section-head">
+            <h2>任务发布</h2>
+            <button id="addTaskBtn" class="admin-only" type="button">+ 任务</button>
+          </div>
+          <div class="task-form admin-only">
+            <input id="taskTitleInput" aria-label="任务内容" placeholder="例如：整理书桌 / 背 10 个单词">
+            <input id="taskRewardInput" class="number-input" aria-label="奖励抽奖次数" type="number" min="1" value="1">
+            <button id="createTaskBtn" class="primary" type="button">发布任务</button>
+          </div>
+          <div id="taskList" class="task-list"></div>
+        </div>
+
+        <div class="table-card admin-only">
+          <div class="section-head">
+            <h2>条目与概率</h2>
+            <button id="addItemBtn" type="button">+ 条目</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>库存</th>
+                  <th>权重</th>
+                  <th>当前概率</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="itemRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <aside class="history">
+        <div class="section-head">
+          <h2>抽奖记录</h2>
+          <button id="clearHistoryBtn" type="button">清空</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </aside>
+    </section>
+  </main>
+
+  <template id="poolButtonTemplate">
+    <button class="pool-button" type="button">
+      <span class="pool-name"></span>
+      <span class="pool-meta"></span>
+    </button>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
