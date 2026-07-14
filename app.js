@@ -1,5 +1,15 @@
 const storageKey = "family-lottery-console-v1";
 const cloudRowId = "main";
+const maxPoolImageSize = 1200;
+const poolImageQuality = 0.86;
+const defaultPoolImages = {
+  "sky-city": "assets/sky-city-default.png",
+  "zhou-dachu": "assets/zhou-dachu-default.png",
+  "keyboard": "assets/keyboard-default.png",
+  "xuanka": "assets/xuanka-default.png",
+  "drone": "assets/drone-default.png",
+  "tank": "assets/tank-default.png"
+};
 
 // Fill these after creating the Supabase project.
 const SUPABASE_URL = "https://ifgipldyqurefdtwhqdd.supabase.co";
@@ -30,6 +40,7 @@ const defaults = {
     {
       id: "sky-city",
       name: "天空之城",
+      imageUrl: defaultPoolImages["sky-city"],
       items: [
         { id: "tian", name: "天", initialStock: 45, stock: 45, weight: 45 },
         { id: "kong", name: "空", initialStock: 35, stock: 35, weight: 35 },
@@ -40,6 +51,7 @@ const defaults = {
     {
       id: "zhou-dachu",
       name: "周大厨",
+      imageUrl: defaultPoolImages["zhou-dachu"],
       items: [
         { id: "zhou", name: "周", initialStock: 50, stock: 50, weight: 50 },
         { id: "da", name: "大", initialStock: 49, stock: 49, weight: 49 },
@@ -49,6 +61,7 @@ const defaults = {
     {
       id: "keyboard",
       name: "键盘",
+      imageUrl: defaultPoolImages["keyboard"],
       items: [
         { id: "jian", name: "键", initialStock: 99, stock: 99, weight: 99 },
         { id: "pan", name: "盘", initialStock: 1, stock: 1, weight: 1 }
@@ -57,6 +70,7 @@ const defaults = {
     {
       id: "xuanka",
       name: "炫卡斗士",
+      imageUrl: defaultPoolImages["xuanka"],
       items: [
         { id: "xuan", name: "炫", initialStock: 66, stock: 66, weight: 66 },
         { id: "ka", name: "卡", initialStock: 66, stock: 66, weight: 66 },
@@ -67,6 +81,7 @@ const defaults = {
     {
       id: "drone",
       name: "无人机",
+      imageUrl: defaultPoolImages["drone"],
       items: [
         { id: "wu", name: "无", initialStock: 100, stock: 100, weight: 100 },
         { id: "ren", name: "人", initialStock: 99, stock: 99, weight: 99 },
@@ -76,6 +91,7 @@ const defaults = {
     {
       id: "tank",
       name: "坦克",
+      imageUrl: defaultPoolImages["tank"],
       items: [
         { id: "tan", name: "坦", initialStock: 198, stock: 198, weight: 198 },
         { id: "ke", name: "克", initialStock: 2, stock: 2, weight: 2 }
@@ -110,6 +126,9 @@ const drawCredit = document.querySelector("#drawCredit");
 const taskTitleInput = document.querySelector("#taskTitleInput");
 const taskRewardInput = document.querySelector("#taskRewardInput");
 const taskList = document.querySelector("#taskList");
+const poolImageFrame = document.querySelector("#poolImageFrame");
+const poolImage = document.querySelector("#poolImage");
+const poolImageInput = document.querySelector("#poolImageInput");
 const loginScreen = document.querySelector("#loginScreen");
 const loginBtn = document.querySelector("#loginBtn");
 const logoutBtn = document.querySelector("#logoutBtn");
@@ -133,6 +152,8 @@ document.querySelector("#clearHistoryBtn").addEventListener("click", clearHistor
 document.querySelector("#resetAllBtn").addEventListener("click", resetAll);
 document.querySelector("#exportBtn").addEventListener("click", exportConfig);
 document.querySelector("#importFile").addEventListener("change", importConfig);
+poolImageInput.addEventListener("change", setPoolImage);
+document.querySelector("#removePoolImageBtn").addEventListener("click", removePoolImage);
 loginBtn.addEventListener("click", login);
 logoutBtn.addEventListener("click", logout);
 passwordInput.addEventListener("keydown", event => {
@@ -167,19 +188,27 @@ function loadState() {
     if (!raw) return normalizeState(clone(defaults));
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed.pools) || parsed.pools.length === 0) return normalizeState(clone(defaults));
-    return normalizeState(parsed);
+    const normalized = normalizeState(parsed);
+    localStorage.setItem(storageKey, JSON.stringify(normalized));
+    return normalized;
   } catch {
     return normalizeState(clone(defaults));
   }
 }
 
 function normalizeState(value) {
-  value.drawCredit = Math.max(0, Math.floor(Number(value.drawCredit) || 0));
+  value.drawCredit = Math.floor(Number(value.drawCredit) || 0);
   if (!Array.isArray(value.tasks)) value.tasks = [];
+  value.tasks = value.tasks.map(normalizeTask);
   if (!Array.isArray(value.history)) value.history = [];
   if (!value.inventory || typeof value.inventory !== "object") value.inventory = {};
   value.pools.forEach(pool => {
     if (!Array.isArray(pool.items)) pool.items = [];
+    if (typeof pool.imageData !== "string") pool.imageData = "";
+    if (typeof pool.imageUrl !== "string") pool.imageUrl = "";
+    if (!pool.imageData && !pool.imageUrl && !pool.imageRemoved && defaultPoolImages[pool.id]) {
+      pool.imageUrl = defaultPoolImages[pool.id];
+    }
     if (!value.inventory[pool.id]) value.inventory[pool.id] = {};
     pool.items.forEach(item => {
       item.stock = Math.max(0, Math.floor(Number(item.stock) || 0));
@@ -197,6 +226,21 @@ function normalizeState(value) {
     value.rareWeightsTuned = true;
   }
   return value;
+}
+
+function normalizeTask(task) {
+  return {
+    id: String(task?.id || uid("task")),
+    title: String(task?.title || "未命名任务"),
+    reward: taskRewardValue(task),
+    done: Boolean(task?.done),
+    createdAt: String(task?.createdAt || new Date().toLocaleString("zh-CN", { hour12: false })),
+    ...(task?.doneAt ? { doneAt: String(task.doneAt) } : {})
+  };
+}
+
+function taskRewardValue(task) {
+  return Math.max(1, Math.floor(Number(task?.reward) || 1));
 }
 
 function migrateInventoryFromHistory(value) {
@@ -405,6 +449,10 @@ function getCurrentPool() {
   return state.pools.find(pool => pool.id === state.currentPoolId) || state.pools[0];
 }
 
+function getPoolImage(pool) {
+  return pool?.imageData || pool?.imageUrl || "";
+}
+
 function getActiveItems(pool) {
   return pool.items.filter(item => Number(item.stock) > 0 && Number(item.weight) > 0);
 }
@@ -454,6 +502,7 @@ function addPool() {
   state.pools.push({
     id,
     name: "新奖池",
+    imageData: "",
     items: [
       { id: uid("item"), name: "普通", initialStock: 99, stock: 99, weight: 99 },
       { id: uid("item"), name: "稀有", initialStock: 1, stock: 1, weight: 1 }
@@ -489,10 +538,76 @@ function addItem() {
   render();
 }
 
+async function setPoolImage(event) {
+  if (!isAdmin()) return;
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const poolId = getCurrentPool()?.id;
+  if (!file.type.startsWith("image/")) {
+    alert("请选择图片文件。");
+    event.target.value = "";
+    return;
+  }
+  try {
+    const imageData = await readPoolImageData(file);
+    const pool = state.pools.find(item => item.id === poolId);
+    if (!pool) return;
+    pool.imageData = imageData;
+    pool.imageUrl = "";
+    pool.imageRemoved = false;
+    persist();
+    render();
+  } catch {
+    alert("图片读取失败，请换一张图片试试。");
+  } finally {
+    event.target.value = "";
+  }
+}
+
+function readPoolImageData(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      const scale = Math.min(
+        1,
+        maxPoolImageSize / image.naturalWidth,
+        maxPoolImageSize / image.naturalHeight
+      );
+      const width = Math.max(1, Math.round(image.naturalWidth * scale));
+      const height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      canvas.width = width;
+      canvas.height = height;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", poolImageQuality));
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Image load failed"));
+    };
+    image.src = url;
+  });
+}
+
+function removePoolImage() {
+  if (!isAdmin()) return;
+  const pool = getCurrentPool();
+  pool.imageData = "";
+  pool.imageUrl = "";
+  pool.imageRemoved = true;
+  persist();
+  render();
+}
+
 function createTask() {
   if (!isAdmin()) return;
   const title = taskTitleInput.value.trim();
-  const reward = Math.max(1, Math.floor(Number(taskRewardInput.value) || 1));
+  const reward = Math.max(1, Math.floor(parseDecimal(taskRewardInput.value)));
   if (!title) {
     taskTitleInput.focus();
     return;
@@ -514,12 +629,14 @@ function completeTask(id) {
   if (!isAdmin()) return;
   const task = state.tasks.find(item => item.id === id);
   if (!task || task.done) return;
+  const reward = taskRewardValue(task);
+  task.reward = reward;
   task.done = true;
   task.doneAt = new Date().toLocaleString("zh-CN", { hour12: false });
-  state.drawCredit = Math.max(0, Number(state.drawCredit) || 0) + Number(task.reward);
+  state.drawCredit = (Number(state.drawCredit) || 0) + reward;
   state.history.unshift({
     pool: "任务奖励",
-    item: `+${task.reward} 次`,
+    item: `+${reward} 次`,
     time: new Date().toLocaleTimeString("zh-CN", { hour12: false })
   });
   persist();
@@ -530,15 +647,59 @@ function reopenTask(id) {
   if (!isAdmin()) return;
   const task = state.tasks.find(item => item.id === id);
   if (!task || !task.done) return;
+  const reward = taskRewardValue(task);
+  task.reward = reward;
   task.done = false;
   delete task.doneAt;
-  state.drawCredit = Math.max(0, (Number(state.drawCredit) || 0) - Number(task.reward));
+  state.drawCredit = (Number(state.drawCredit) || 0) - reward;
+  state.history.unshift({
+    pool: "撤销任务",
+    item: `-${reward} 次`,
+    time: new Date().toLocaleTimeString("zh-CN", { hour12: false })
+  });
   persist();
   render();
 }
 
+function updateTask(id, key, value) {
+  if (!isAdmin()) return;
+  const task = state.tasks.find(item => item.id === id);
+  if (!task) return;
+  if (key === "title") {
+    task.title = value.trim() || "未命名任务";
+  }
+  if (key === "reward") {
+    const oldReward = taskRewardValue(task);
+    const newReward = Math.max(1, Math.floor(parseDecimal(value)));
+    task.reward = newReward;
+    if (task.done) {
+      state.drawCredit = (Number(state.drawCredit) || 0) + newReward - oldReward;
+    }
+  }
+  persist();
+  render();
+}
+
+function adjustTaskReward(id, delta) {
+  if (!isAdmin()) return;
+  const task = state.tasks.find(item => item.id === id);
+  if (!task) return;
+  updateTask(id, "reward", (taskRewardValue(task) + delta).toString());
+}
+
 function deleteTask(id) {
   if (!isAdmin()) return;
+  const task = state.tasks.find(item => item.id === id);
+  if (!task) return;
+  if (task.done) {
+    const reward = taskRewardValue(task);
+    state.drawCredit = (Number(state.drawCredit) || 0) - reward;
+    state.history.unshift({
+      pool: "删除已完成任务",
+      item: `-${reward} 次`,
+      time: new Date().toLocaleTimeString("zh-CN", { hour12: false })
+    });
+  }
   state.tasks = state.tasks.filter(item => item.id !== id);
   persist();
   render();
@@ -546,7 +707,7 @@ function deleteTask(id) {
 
 function changeCredit(delta) {
   if (!isAdmin()) return;
-  state.drawCredit = Math.max(0, (Number(state.drawCredit) || 0) + delta);
+  state.drawCredit = (Number(state.drawCredit) || 0) + delta;
   persist();
   render();
 }
@@ -562,6 +723,7 @@ function updateItem(id, key, value) {
       ? Math.max(0, parseDecimal(value))
       : Math.max(0, Math.floor(parseDecimal(value)));
     item[key] = number;
+    if (key === "stock") item.initialStock = number;
     if (key === "initialStock" && item.stock > number) item.stock = number;
   }
   persist();
@@ -644,7 +806,8 @@ function resetCurrentPool() {
 }
 
 function clearHistory() {
-  if (!isAdmin() && !confirm("清空自己的显示记录？")) return;
+  if (!isAdmin()) return;
+  if (!confirm("清空全部抽奖记录？")) return;
   state.history = [];
   persist();
   render();
@@ -717,7 +880,12 @@ function renderPools() {
   const template = document.querySelector("#poolButtonTemplate");
   state.pools.forEach(pool => {
     const node = template.content.firstElementChild.cloneNode(true);
+    const thumb = node.querySelector(".pool-thumb");
+    const poolImageSource = getPoolImage(pool);
     node.classList.toggle("active", pool.id === getCurrentPool().id);
+    node.classList.toggle("has-image", Boolean(poolImageSource));
+    thumb.textContent = poolImageSource ? "" : pool.name.slice(0, 1);
+    thumb.style.backgroundImage = poolImageSource ? `url("${poolImageSource}")` : "";
     node.querySelector(".pool-name").textContent = pool.name;
     node.querySelector(".pool-meta").textContent = `${getRemaining(pool)} 张 · ${pool.items.length} 种`;
     node.addEventListener("click", () => {
@@ -732,12 +900,17 @@ function renderPools() {
 
 function renderEditor() {
   const pool = getCurrentPool();
+  const poolImageSource = getPoolImage(pool);
   state.currentPoolId = pool.id;
   poolNameInput.value = pool.name;
+  poolImageFrame.classList.toggle("has-image", Boolean(poolImageSource));
+  poolImage.src = poolImageSource;
+  poolImage.alt = poolImageSource ? `${pool.name}奖池图片` : "当前奖池图片";
   remainingCount.textContent = getRemaining(pool);
   totalWeight.textContent = getWeightSum(pool);
   activeItemCount.textContent = getActiveItems(pool).length;
   drawCredit.textContent = Number(state.drawCredit) || 0;
+  drawCredit.closest(".draw-credit").classList.toggle("negative", (Number(state.drawCredit) || 0) < 0);
 
   itemRows.innerHTML = "";
   pool.items.forEach(item => {
@@ -776,20 +949,45 @@ function renderTasks() {
   }
   state.tasks.forEach(task => {
     const row = document.createElement("div");
-    row.className = `task-item${task.done ? " done" : ""}`;
+    row.className = `task-item${task.done ? " done" : ""}${isAdmin() ? " task-admin" : ""}`;
     const status = task.done ? `已完成 · ${task.doneAt || ""}` : `发布于 ${task.createdAt || ""}`;
-    row.innerHTML = `
-      <div class="task-main">
-        <strong>${escapeHtml(task.title)}</strong>
-        <span>${escapeHtml(status)}</span>
-      </div>
-      <span class="task-badge">+${Number(task.reward) || 0} 次</span>
-      <button class="${task.done ? "ghost" : "primary"} small admin-only" type="button">${task.done ? "撤销" : "完成发奖"}</button>
-      <button class="danger small admin-only" type="button">删除</button>
-    `;
-    const [toggleBtn, deleteBtn] = row.querySelectorAll("button");
-    if (toggleBtn) toggleBtn.addEventListener("click", () => task.done ? reopenTask(task.id) : completeTask(task.id));
-    if (deleteBtn) deleteBtn.addEventListener("click", () => deleteTask(task.id));
+    if (isAdmin()) {
+      row.innerHTML = `
+        <div class="task-main task-edit">
+          <input class="task-title-edit" aria-label="任务内容" value="${escapeHtml(task.title)}">
+          <span>${escapeHtml(status)}</span>
+        </div>
+        <div class="task-reward-edit" aria-label="奖励抽奖次数">
+          <button class="small ghost task-minus" type="button">-</button>
+          <input class="number-input" aria-label="奖励抽奖次数" type="number" min="1" value="${Number(task.reward) || 1}">
+          <button class="small ghost task-plus" type="button">+</button>
+        </div>
+        <button class="${task.done ? "ghost" : "primary"} small" type="button">${task.done ? "撤销" : "完成发奖"}</button>
+        <button class="danger small" type="button">删除</button>
+      `;
+      const titleInput = row.querySelector(".task-title-edit");
+      const rewardInput = row.querySelector(".task-reward-edit input");
+      const minusBtn = row.querySelector(".task-minus");
+      const plusBtn = row.querySelector(".task-plus");
+      const [toggleBtn, deleteBtn] = [...row.querySelectorAll(":scope > button")];
+      titleInput.addEventListener("change", event => updateTask(task.id, "title", event.target.value));
+      titleInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") event.target.blur();
+      });
+      rewardInput.addEventListener("change", event => updateTask(task.id, "reward", event.target.value));
+      minusBtn.addEventListener("click", () => adjustTaskReward(task.id, -1));
+      plusBtn.addEventListener("click", () => adjustTaskReward(task.id, 1));
+      toggleBtn.addEventListener("click", () => task.done ? reopenTask(task.id) : completeTask(task.id));
+      deleteBtn.addEventListener("click", () => deleteTask(task.id));
+    } else {
+      row.innerHTML = `
+        <div class="task-main">
+          <strong>${escapeHtml(task.title)}</strong>
+          <span>${escapeHtml(status)}</span>
+        </div>
+        <span class="task-badge">+${Number(task.reward) || 0} 次</span>
+      `;
+    }
     taskList.appendChild(row);
   });
 }

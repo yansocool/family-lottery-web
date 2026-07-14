@@ -150,6 +150,8 @@ body:not(.locked) .login-screen {
 
 .password-row input,
 .task-form input,
+.task-title-edit,
+.task-reward-edit input,
 td input {
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.8);
@@ -160,6 +162,8 @@ td input {
 
 .password-row input:focus,
 .task-form input:focus,
+.task-title-edit:focus,
+.task-reward-edit input:focus,
 td input:focus,
 .pool-title-input:focus {
   border-color: rgba(47, 140, 255, 0.55);
@@ -401,6 +405,68 @@ h2 {
   border-radius: 12px;
 }
 
+.pool-image-panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.pool-image-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 210px;
+  aspect-ratio: 16 / 7;
+  border: 1px solid rgba(47, 140, 255, 0.2);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(233, 244, 255, 0.68)),
+    repeating-linear-gradient(115deg, rgba(47, 140, 255, 0.08) 0 1px, transparent 1px 36px);
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+.pool-image-frame img {
+  display: none;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pool-image-frame.has-image img {
+  display: block;
+}
+
+.pool-image-frame.has-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+}
+
+.pool-image-frame span {
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.pool-image-frame.has-image span {
+  display: none;
+}
+
+.pool-image-actions {
+  display: grid;
+  gap: 8px;
+  min-width: 112px;
+}
+
+.pool-image-actions .file-btn,
+.pool-image-actions button {
+  justify-content: center;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -498,6 +564,15 @@ h2 {
   font-size: 32px;
 }
 
+.draw-credit.negative {
+  border-color: rgba(238, 77, 77, 0.24);
+  background: rgba(255, 241, 241, 0.78);
+}
+
+.draw-credit.negative strong {
+  color: var(--danger);
+}
+
 .credit-tools {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -532,6 +607,10 @@ h2 {
   background: rgba(238, 244, 250, 0.72);
 }
 
+.task-admin {
+  grid-template-columns: minmax(220px, 1fr) auto auto auto;
+}
+
 .task-main {
   display: grid;
   gap: 4px;
@@ -540,6 +619,34 @@ h2 {
 
 .task-main strong {
   overflow-wrap: anywhere;
+}
+
+.task-edit {
+  gap: 6px;
+}
+
+.task-title-edit {
+  width: 100%;
+  min-width: 0;
+  font-weight: 900;
+}
+
+.task-reward-edit {
+  display: grid;
+  grid-template-columns: 38px 78px 38px;
+  gap: 6px;
+  align-items: center;
+}
+
+.task-reward-edit button {
+  min-width: 38px;
+  padding-inline: 0;
+  font-weight: 950;
+}
+
+.task-reward-edit input {
+  width: 78px;
+  text-align: center;
 }
 
 .task-main span,
@@ -663,9 +770,23 @@ th {
 
   .topbar,
   .draw-panel,
+  .pool-image-panel,
   .pool-title-row {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .pool-image-panel {
+    display: flex;
+  }
+
+  .pool-image-frame {
+    min-height: 170px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .pool-image-actions {
+    grid-template-columns: 1fr 1fr;
   }
 
   .top-actions {
@@ -731,5 +852,689 @@ th {
 
   .ticket-window span {
     font-size: clamp(36px, 17vw, 64px);
+  }
+}
+
+/* Arcade console theme inspired by the selected Product Design direction. */
+:root {
+  --arcade-blue: #075bd6;
+  --arcade-blue-deep: #02398e;
+  --arcade-blue-dark: #01296d;
+  --arcade-cream: #fff8e8;
+  --arcade-paper: #fffdf7;
+  --arcade-red: #ed3430;
+  --arcade-red-deep: #b8171b;
+  --arcade-gold: #ffc72c;
+  --arcade-gold-deep: #e79a00;
+  --arcade-ink: #10244a;
+  --arcade-muted: #61708a;
+  --arcade-line: rgba(19, 52, 106, 0.15);
+}
+
+body {
+  color: var(--arcade-ink);
+  background:
+    radial-gradient(circle at 5% 94%, rgba(255, 214, 64, 0.38) 0 42px, transparent 43px),
+    radial-gradient(circle at 82% 9%, rgba(255, 255, 255, 0.18) 0 74px, transparent 75px),
+    linear-gradient(150deg, #0a6bff 0%, #064fc2 38%, #033588 70%, #021e56 100%);
+  font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+
+body::before {
+  background:
+    radial-gradient(circle, rgba(255, 199, 44, 0.55) 0 3px, transparent 4px) 24px 26px / 96px 96px,
+    radial-gradient(circle, rgba(237, 52, 48, 0.48) 0 3px, transparent 4px) 62px 72px / 118px 118px,
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16), transparent);
+  opacity: 0.55;
+}
+
+button {
+  border: 2px solid rgba(2, 41, 109, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffef8, #f4ead4);
+  color: var(--arcade-ink);
+  box-shadow: 0 5px 0 rgba(2, 41, 109, 0.16), 0 16px 28px rgba(2, 31, 83, 0.18);
+  backdrop-filter: none;
+  font-weight: 900;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 199, 44, 0.7);
+  box-shadow: 0 7px 0 rgba(2, 41, 109, 0.18), 0 20px 34px rgba(2, 31, 83, 0.22);
+}
+
+button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(2, 41, 109, 0.16), 0 10px 18px rgba(2, 31, 83, 0.2);
+}
+
+.app {
+  width: min(1500px, calc(100vw - 28px));
+  min-height: calc(100vh - 28px);
+  margin: 14px auto;
+  padding: 14px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-radius: 34px;
+  background:
+    linear-gradient(180deg, rgba(7, 91, 214, 0.96), rgba(2, 57, 142, 0.98)),
+    var(--arcade-blue);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -8px 0 rgba(0, 25, 83, 0.32),
+    0 30px 80px rgba(0, 16, 60, 0.42);
+}
+
+.topbar {
+  position: sticky;
+  top: 10px;
+  z-index: 10;
+  padding: 14px 18px;
+  border: 3px solid rgba(7, 35, 105, 0.5);
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(21, 118, 255, 0.98), rgba(4, 73, 185, 0.98));
+  color: #fff;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -6px 0 rgba(0, 39, 119, 0.45),
+    0 12px 28px rgba(0, 24, 77, 0.3);
+}
+
+.topbar h1 {
+  color: #fff;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 950;
+  text-shadow: 0 4px 0 rgba(0, 44, 136, 0.75), 0 8px 18px rgba(0, 21, 68, 0.48);
+}
+
+.eyebrow,
+.topbar .eyebrow {
+  color: #fff2a9;
+  font-weight: 950;
+}
+
+.top-actions {
+  gap: 12px;
+}
+
+.top-actions button,
+.top-actions .file-btn {
+  min-height: 54px;
+  min-width: 118px;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.top-actions .file-btn {
+  padding: 10px 16px;
+}
+
+.top-actions .file-btn.ghost {
+  display: inline-flex;
+  border: 2px solid rgba(2, 41, 109, 0.18);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #edf5ff);
+  color: #075bd6;
+  box-shadow: 0 5px 0 rgba(2, 41, 109, 0.16), 0 16px 28px rgba(2, 31, 83, 0.18);
+}
+
+.sync-pill {
+  min-height: 46px;
+  border: 2px solid rgba(255, 255, 255, 0.24);
+  background: rgba(2, 41, 109, 0.36);
+  color: #fff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18);
+}
+
+.sync-pill[data-mode="online"] {
+  background: linear-gradient(180deg, #ebfff2, #baf4ce);
+  color: #00683c;
+}
+
+.sync-pill[data-mode="syncing"] {
+  background: linear-gradient(180deg, #fff7ce, #ffe26b);
+  color: #6c4600;
+}
+
+.sync-pill[data-mode="error"] {
+  background: linear-gradient(180deg, #ffe7e5, #ffb7b1);
+  color: var(--arcade-red-deep);
+}
+
+.layout {
+  grid-template-columns: 280px minmax(0, 1fr) 310px;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.sidebar,
+.history,
+.pool-editor,
+.draw-panel,
+.table-card,
+.tasks-card {
+  border: 3px solid rgba(4, 44, 126, 0.32);
+  background: linear-gradient(180deg, var(--arcade-paper), var(--arcade-cream));
+  border-radius: 26px;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.9),
+    0 14px 30px rgba(0, 24, 77, 0.28);
+  backdrop-filter: none;
+}
+
+.sidebar,
+.history {
+  padding: 12px;
+}
+
+.section-head {
+  min-height: 48px;
+  margin: -12px -12px 12px;
+  padding: 10px 14px;
+  border-radius: 22px 22px 16px 16px;
+  background: linear-gradient(180deg, #ff5551, var(--arcade-red));
+  color: #fff;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.38), inset 0 -5px 0 rgba(151, 14, 19, 0.34);
+}
+
+.section-head h2 {
+  color: #fff;
+  font-size: 19px;
+  text-shadow: 0 2px 0 rgba(133, 0, 0, 0.38);
+}
+
+.section-head button {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: linear-gradient(180deg, #fff, #ffeeb8);
+  box-shadow: 0 3px 0 rgba(113, 0, 0, 0.24);
+}
+
+.pool-list {
+  gap: 12px;
+}
+
+.pool-button {
+  position: relative;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: center;
+  min-height: 104px;
+  gap: 12px;
+  padding: 10px;
+  border: 2px solid rgba(224, 167, 0, 0.38);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffdf7, #fff6df);
+  box-shadow: 0 4px 0 rgba(224, 167, 0, 0.18), 0 10px 18px rgba(94, 64, 0, 0.12);
+}
+
+.pool-button.active {
+  border-color: var(--arcade-gold);
+  background: linear-gradient(180deg, #fff9d2, #fff1b2);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.78), 0 5px 0 var(--arcade-gold-deep), 0 16px 24px rgba(94, 64, 0, 0.2);
+}
+
+.pool-button.active::after {
+  content: "";
+  position: absolute;
+  right: -15px;
+  width: 0;
+  height: 0;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  border-left: 16px solid var(--arcade-gold);
+}
+
+.pool-thumb {
+  display: grid;
+  place-items: center;
+  width: 102px;
+  height: 58px;
+  border: 3px solid #fff;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.24), transparent),
+    linear-gradient(135deg, #7ec4ff, #1b75f1);
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  font-size: 34px;
+  font-weight: 950;
+  text-shadow: 0 3px 0 rgba(0, 40, 120, 0.42);
+  box-shadow: 0 8px 16px rgba(14, 50, 110, 0.18);
+}
+
+.pool-button:nth-child(2n) .pool-thumb {
+  background: linear-gradient(135deg, #ffe4a6, #ff8f3d);
+}
+
+.pool-button:nth-child(3n) .pool-thumb {
+  background: linear-gradient(135deg, #caedff, #6b84ff);
+}
+
+.pool-button.has-image .pool-thumb {
+  background-size: cover;
+  background-position: center;
+  color: transparent;
+}
+
+.pool-copy {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.pool-name {
+  color: var(--arcade-ink);
+  font-size: 20px;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
+.pool-meta {
+  color: #d28900;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.pool-editor {
+  position: relative;
+  padding: 12px;
+}
+
+.pool-title-row {
+  position: absolute;
+  z-index: 2;
+  left: 30px;
+  top: 30px;
+  right: 30px;
+  align-items: flex-start;
+}
+
+.pool-title-input {
+  width: min(480px, calc(100% - 130px));
+  padding: 0;
+  color: #fff;
+  font-size: clamp(34px, 4vw, 56px);
+  line-height: 1.1;
+  text-shadow: 0 4px 0 rgba(0, 52, 138, 0.75), 0 8px 18px rgba(0, 20, 65, 0.38);
+}
+
+.pool-image-panel {
+  position: relative;
+  display: block;
+  margin: 0;
+}
+
+.pool-image-frame {
+  min-height: 292px;
+  aspect-ratio: 16 / 6.2;
+  border: 4px solid rgba(255, 255, 255, 0.88);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.72) 0 34px, transparent 35px),
+    radial-gradient(ellipse at 68% 78%, rgba(255, 255, 255, 0.24) 0 90px, transparent 92px),
+    linear-gradient(180deg, rgba(12, 124, 255, 0.34), rgba(3, 73, 185, 0.58)),
+    linear-gradient(135deg, #78d5ff, #0c66da 64%, #0844a2);
+  box-shadow: inset 0 0 0 2px rgba(4, 67, 167, 0.3), 0 16px 32px rgba(0, 42, 119, 0.26);
+}
+
+.pool-image-frame::before {
+  content: "完成任务，赢取惊喜奖励！";
+  position: absolute;
+  z-index: 1;
+  left: 30px;
+  top: 112px;
+  max-width: 330px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.65;
+  text-shadow: 0 2px 8px rgba(0, 29, 92, 0.5);
+}
+
+.pool-image-frame span {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  text-shadow: 0 2px 8px rgba(0, 29, 92, 0.55);
+}
+
+.pool-image-frame img {
+  filter: saturate(1.08) contrast(1.04);
+}
+
+.pool-image-frame.has-image::before {
+  content: "";
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 54, 143, 0.56), transparent 48%);
+  box-shadow: none;
+}
+
+.pool-image-actions {
+  position: absolute;
+  left: 30px;
+  bottom: 26px;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+}
+
+.pool-image-actions .file-btn,
+.pool-image-actions button {
+  min-height: 48px;
+  padding: 10px 17px;
+  border: 2px solid rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 8px 18px rgba(0, 42, 119, 0.22);
+  backdrop-filter: blur(10px);
+}
+
+.pool-image-actions .file-btn:hover,
+.pool-image-actions button:hover {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.stats-grid div {
+  border: 2px solid rgba(4, 73, 185, 0.14);
+  background: linear-gradient(180deg, #fff, #fff3ce);
+  border-radius: 18px;
+}
+
+.stats-grid strong {
+  color: var(--arcade-red);
+  font-weight: 950;
+}
+
+.draw-panel {
+  grid-template-columns: minmax(280px, 1fr) 190px;
+  padding: 16px;
+  border-color: rgba(244, 191, 24, 0.5);
+}
+
+.ticket-window {
+  min-height: 148px;
+  border: 3px dashed rgba(222, 157, 0, 0.5);
+  border-radius: 24px;
+  background:
+    linear-gradient(90deg, rgba(255, 247, 204, 0.78) 0 49%, rgba(222, 157, 0, 0.32) 49% 50%, rgba(255, 246, 214, 0.78) 50%),
+    linear-gradient(180deg, #fffef8, #fff1c8);
+}
+
+.ticket-window::before {
+  inset: 13px;
+  border-color: rgba(222, 157, 0, 0.35);
+}
+
+.ticket-window span {
+  color: var(--arcade-ink);
+  font-size: clamp(44px, 6vw, 74px);
+  text-shadow: 0 3px 0 rgba(255, 199, 44, 0.6);
+}
+
+.draw-actions {
+  gap: 10px;
+}
+
+.draw-credit {
+  border: 3px solid rgba(255, 255, 255, 0.88);
+  background: linear-gradient(180deg, #fffaf0, #fff1ce);
+  box-shadow: 0 5px 0 rgba(224, 167, 0, 0.22);
+}
+
+.draw-credit span {
+  color: var(--arcade-ink);
+  font-weight: 900;
+}
+
+.draw-credit strong {
+  color: var(--arcade-red);
+  font-size: 40px;
+}
+
+#drawOneBtn,
+#redeemBtn {
+  min-height: 58px;
+  border-color: #ffd865;
+  background: linear-gradient(180deg, #ffe56b, var(--arcade-gold));
+  color: #6a3300;
+  box-shadow: 0 6px 0 var(--arcade-gold-deep), 0 16px 26px rgba(165, 97, 0, 0.25);
+  font-size: 19px;
+}
+
+#drawTenBtn,
+#resetPoolBtn {
+  min-height: 58px;
+  border-color: #ff7773;
+  background: linear-gradient(180deg, #ff5e5a, var(--arcade-red));
+  color: #fff;
+  box-shadow: 0 6px 0 var(--arcade-red-deep), 0 16px 26px rgba(153, 18, 21, 0.24);
+  font-size: 19px;
+}
+
+.credit-tools button {
+  min-height: 42px;
+}
+
+.tasks-card,
+.table-card {
+  padding: 12px;
+}
+
+.tasks-card .section-head,
+.table-card .section-head {
+  background: linear-gradient(180deg, #287fff, #075bd6);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.38), inset 0 -5px 0 rgba(0, 51, 143, 0.42);
+}
+
+.task-form {
+  grid-template-columns: minmax(220px, 1fr) 112px 136px;
+  padding: 12px;
+  border: 2px solid rgba(7, 91, 214, 0.12);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fff, #fff7e4);
+}
+
+.password-row input,
+.task-form input,
+.task-title-edit,
+.task-reward-edit input,
+td input {
+  border: 2px solid rgba(7, 91, 214, 0.14);
+  background: #fffdf8;
+  border-radius: 14px;
+}
+
+.task-item {
+  border: 0;
+  border-bottom: 1px solid rgba(16, 36, 74, 0.12);
+  border-radius: 0;
+  background: transparent;
+}
+
+.task-item:last-child {
+  border-bottom: 0;
+}
+
+.task-main strong,
+.task-title-edit {
+  color: var(--arcade-ink);
+}
+
+.task-badge {
+  border: 2px solid rgba(255, 199, 44, 0.45);
+  background: linear-gradient(180deg, #fff7c4, #ffe78a);
+  color: #8b5200;
+}
+
+table {
+  min-width: 680px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 18px;
+}
+
+th {
+  color: var(--arcade-muted);
+}
+
+.history .section-head {
+  background: linear-gradient(180deg, #ff5551, var(--arcade-red));
+}
+
+.history-list {
+  max-height: 760px;
+}
+
+.history-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 14px 10px;
+  border: 0;
+  border-bottom: 1px solid rgba(16, 36, 74, 0.12);
+  border-radius: 0;
+  background: transparent;
+}
+
+.history-item:last-child {
+  border-bottom: 0;
+}
+
+.history-item strong {
+  color: var(--arcade-ink);
+}
+
+.history-item span {
+  color: var(--arcade-muted);
+  font-weight: 700;
+}
+
+.danger {
+  border-color: #ff7773;
+  background: linear-gradient(180deg, #ff5e5a, var(--arcade-red));
+  color: #fff;
+  box-shadow: 0 4px 0 var(--arcade-red-deep), 0 14px 22px rgba(153, 18, 21, 0.22);
+}
+
+.primary {
+  border-color: #ffd865;
+  background: linear-gradient(180deg, #ffe56b, var(--arcade-gold));
+  color: #6a3300;
+}
+
+.ghost {
+  background: linear-gradient(180deg, #ffffff, #edf5ff);
+  color: #075bd6;
+}
+
+.login-screen {
+  background:
+    radial-gradient(circle at 20% 12%, rgba(255, 216, 101, 0.24), transparent 20%),
+    linear-gradient(150deg, #0a6bff, #033588 72%, #021e56);
+}
+
+.login-card {
+  border: 4px solid rgba(255, 255, 255, 0.32);
+  background: linear-gradient(180deg, #fffdf5, #fff1d0);
+  border-radius: 28px;
+  box-shadow: inset 0 2px 0 #fff, 0 28px 70px rgba(0, 16, 60, 0.42);
+}
+
+.login-card h1 {
+  color: var(--arcade-ink);
+}
+
+.role-card.active {
+  border-color: var(--arcade-gold);
+  background: linear-gradient(180deg, #fff7c4, #ffe78a);
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pool-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pool-button.active::after {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .app {
+    width: min(100vw - 14px, 1500px);
+    min-height: calc(100vh - 14px);
+    margin: 7px auto;
+    padding: 9px;
+    border-radius: 24px;
+  }
+
+  .topbar {
+    border-radius: 22px;
+  }
+
+  .pool-button {
+    grid-template-columns: 92px minmax(0, 1fr);
+    min-height: 88px;
+  }
+
+  .pool-thumb {
+    width: 82px;
+    height: 48px;
+    font-size: 24px;
+  }
+
+  .pool-title-row {
+    position: static;
+    margin: 0 0 10px;
+  }
+
+  .pool-title-input {
+    width: 100%;
+    color: var(--arcade-ink);
+    font-size: 32px;
+    text-shadow: none;
+  }
+
+  .pool-image-frame {
+    min-height: 192px;
+    aspect-ratio: 4 / 3;
+  }
+
+  .pool-image-frame::before {
+    left: 18px;
+    top: 78px;
+    max-width: 230px;
+    font-size: 14px;
+  }
+
+  .pool-image-actions {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 10px;
+  }
+
+  .draw-panel,
+  .draw-actions,
+  .task-form,
+  .task-admin {
+    grid-template-columns: 1fr;
+  }
+
+  .draw-panel {
+    display: grid;
+  }
+
+  .ticket-window {
+    min-height: 132px;
   }
 }

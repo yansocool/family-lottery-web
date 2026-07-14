@@ -63,6 +63,19 @@
             <input id="poolNameInput" class="pool-title-input" aria-label="奖池名称">
             <button id="deletePoolBtn" class="danger small admin-only" type="button">删除奖池</button>
           </div>
+          <div class="pool-image-panel">
+            <div class="pool-image-frame" id="poolImageFrame">
+              <img id="poolImage" alt="当前奖池图片">
+              <span id="poolImageEmpty">还没有设置图片</span>
+            </div>
+            <div class="pool-image-actions admin-only">
+              <label class="ghost file-btn">
+                设置图片
+                <input id="poolImageInput" type="file" accept="image/*">
+              </label>
+              <button id="removePoolImageBtn" class="ghost" type="button">移除图片</button>
+            </div>
+          </div>
           <div class="stats-grid admin-only">
             <div>
               <span>剩余</span>
@@ -137,7 +150,7 @@
       <aside class="history">
         <div class="section-head">
           <h2>抽奖记录</h2>
-          <button id="clearHistoryBtn" type="button">清空</button>
+          <button id="clearHistoryBtn" class="admin-only" type="button">清空</button>
         </div>
         <div id="historyList" class="history-list"></div>
       </aside>
@@ -146,8 +159,11 @@
 
   <template id="poolButtonTemplate">
     <button class="pool-button" type="button">
-      <span class="pool-name"></span>
-      <span class="pool-meta"></span>
+      <span class="pool-thumb" aria-hidden="true"></span>
+      <span class="pool-copy">
+        <span class="pool-name"></span>
+        <span class="pool-meta"></span>
+      </span>
     </button>
   </template>
 
