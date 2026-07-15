@@ -699,15 +699,6 @@ function deleteTask(id) {
   if (!isAdmin()) return;
   const task = state.tasks.find(item => item.id === id);
   if (!task) return;
-  if (task.done) {
-    const reward = taskRewardValue(task);
-    state.drawCredit = (Number(state.drawCredit) || 0) - reward;
-    state.history.unshift({
-      pool: "删除已完成任务",
-      item: `-${reward} 次`,
-      time: new Date().toLocaleTimeString("zh-CN", { hour12: false })
-    });
-  }
   state.tasks = state.tasks.filter(item => item.id !== id);
   persist();
   render();
