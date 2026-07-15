@@ -126,6 +126,8 @@ const drawCredit = document.querySelector("#drawCredit");
 const taskTitleInput = document.querySelector("#taskTitleInput");
 const taskRewardInput = document.querySelector("#taskRewardInput");
 const taskList = document.querySelector("#taskList");
+const inventoryList = document.querySelector("#inventoryList");
+const inventorySummary = document.querySelector("#inventorySummary");
 const poolImageFrame = document.querySelector("#poolImageFrame");
 const poolImage = document.querySelector("#poolImage");
 const poolImageInput = document.querySelector("#poolImageInput");
@@ -490,13 +492,11 @@ function spendInventory(pool, item, amount = 1) {
 }
 
 function getRequiredItems(pool) {
-  const seen = new Set();
-  return pool.items.filter(item => {
-    const key = item.name;
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  return pool.items.filter(item => item?.id && item?.name);
+}
+
+function getMissingRequiredItems(pool) {
+  return getRequiredItems(pool).filter(item => getInventory(pool, item) <= 0);
 }
 
 function addPool() {
@@ -860,7 +860,7 @@ function importConfig(event) {
 function redeemCurrentPool() {
   const pool = getCurrentPool();
   const required = getRequiredItems(pool);
-  const missing = required.filter(item => getInventory(pool, item) <= 0).map(item => item.name);
+  const missing = getMissingRequiredItems(pool).map(item => item.name);
   if (missing.length) {
     drawResult.textContent = `还缺 ${missing.join(" ")}`;
     ticketWindow.classList.remove("spin");
@@ -944,6 +944,37 @@ function renderEditor() {
   poolNameInput.readOnly = !isAdmin();
 }
 
+function renderInventory() {
+  const pool = getCurrentPool();
+  const required = getRequiredItems(pool);
+  const missing = getMissingRequiredItems(pool);
+  const ownedCount = required.reduce((sum, item) => sum + Math.min(1, getInventory(pool, item)), 0);
+
+  inventorySummary.textContent = missing.length
+    ? `还缺 ${missing.length} 个字`
+    : "已集齐，可以兑奖";
+  inventorySummary.classList.toggle("complete", missing.length === 0 && required.length > 0);
+
+  inventoryList.innerHTML = "";
+  if (!required.length) {
+    inventoryList.innerHTML = `<div class="empty">这个奖池还没有可兑奖的字。</div>`;
+    return;
+  }
+
+  required.forEach(item => {
+    const count = getInventory(pool, item);
+    const chip = document.createElement("div");
+    chip.className = `inventory-chip${count > 0 ? " owned" : " missing"}`;
+    chip.innerHTML = `
+      <strong>${escapeHtml(item.name)}</strong>
+      <span>${count > 0 ? `有 ${count} 张` : "缺 1 张"}</span>
+    `;
+    inventoryList.appendChild(chip);
+  });
+
+  inventoryList.setAttribute("aria-label", `${pool.name} 字库存，已集齐 ${ownedCount} / ${required.length}`);
+}
+
 function renderTasks() {
   taskList.innerHTML = "";
   if (!state.tasks.length) {
@@ -1021,6 +1052,7 @@ function render() {
   applyRole();
   renderPools();
   renderEditor();
+  renderInventory();
   renderTasks();
   renderHistory();
 }

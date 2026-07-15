@@ -1332,6 +1332,93 @@ button:active {
   box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.38), inset 0 -5px 0 rgba(0, 51, 143, 0.42);
 }
 
+.inventory-card {
+  padding: 12px;
+  border: 3px solid rgba(255, 255, 255, 0.72);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #fffdf6, #fff1c9);
+  box-shadow: 0 7px 0 rgba(0, 61, 160, 0.35), 0 18px 46px rgba(0, 41, 112, 0.24);
+}
+
+.inventory-card .section-head {
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, #287fff, #075bd6);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.38), inset 0 -5px 0 rgba(0, 51, 143, 0.42);
+}
+
+.inventory-summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 5px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.86);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff6d2, #ffd45c);
+  color: #8b3600;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 rgba(141, 87, 0, 0.16);
+}
+
+.inventory-summary.complete {
+  background: linear-gradient(180deg, #dfffe4, #8ef3a5);
+  color: #07562a;
+}
+
+.inventory-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 10px;
+}
+
+.inventory-chip {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 2px solid rgba(255, 199, 44, 0.48);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #fffdf8, #fff4d8);
+  color: var(--arcade-ink);
+  box-shadow: inset 0 -3px 0 rgba(222, 157, 0, 0.14);
+}
+
+.inventory-chip strong {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: linear-gradient(180deg, #ffd76d, #ffac34);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  text-shadow: 0 2px 0 rgba(107, 58, 0, 0.32);
+}
+
+.inventory-chip span {
+  min-width: 0;
+  padding-left: 9px;
+  color: #8b5200;
+  font-size: 14px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.inventory-chip.missing {
+  border-color: rgba(241, 45, 51, 0.35);
+  background: linear-gradient(180deg, #fff7f7, #ffe2dd);
+}
+
+.inventory-chip.missing strong {
+  background: linear-gradient(180deg, #a9b8cf, #7d8da8);
+}
+
+.inventory-chip.missing span {
+  color: var(--arcade-red);
+}
+
 .task-form {
   grid-template-columns: minmax(220px, 1fr) 112px 136px;
   padding: 12px;
