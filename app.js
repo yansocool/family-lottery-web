@@ -110,7 +110,17 @@ let lastCloudUpdatedAt = "";
 
 const passwordHashes = {
   admin: "3e20173ad793d17dbe43b5e9aae1423bc44677b3ba003046058f6aadc61ce27d",
+  dad: "3e20173ad793d17dbe43b5e9aae1423bc44677b3ba003046058f6aadc61ce27d",
+  mom: "3e20173ad793d17dbe43b5e9aae1423bc44677b3ba003046058f6aadc61ce27d",
   brother: "bcb15f821479b4d5772bd0ca866c00ad5f926e3580720659cc80d39c9d09802a"
+};
+
+const adminRoles = new Set(["admin", "dad", "mom"]);
+const roleNames = {
+  admin: "哥哥",
+  dad: "爸爸",
+  mom: "妈妈",
+  brother: "弟弟"
 };
 
 const poolList = document.querySelector("#poolList");
@@ -405,7 +415,7 @@ async function saveCloudNow() {
 }
 
 function isAdmin() {
-  return sessionRole === "admin";
+  return adminRoles.has(sessionRole);
 }
 
 async function sha256(text) {
@@ -439,10 +449,11 @@ function logout() {
 
 function applyRole() {
   document.body.classList.toggle("locked", !sessionRole);
-  document.body.classList.toggle("role-admin", sessionRole === "admin");
+  document.body.classList.toggle("role-admin", isAdmin());
   document.body.classList.toggle("role-brother", sessionRole === "brother");
+  document.body.classList.toggle("role-parent", sessionRole === "dad" || sessionRole === "mom");
   roleLabel.textContent = isAdmin()
-    ? "哥哥后台 · 发任务 · 管奖池 · 管次数"
+    ? `${roleNames[sessionRole] || "家长"}后台 · 发任务 · 管奖池 · 管次数`
     : "弟弟抽奖台 · 看任务 · 抽奖 · 兑奖";
 }
 
