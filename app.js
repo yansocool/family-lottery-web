@@ -491,6 +491,11 @@ function spendInventory(pool, item, amount = 1) {
   state.inventory[pool.id][item.id] = Math.max(0, getInventory(pool, item) - amount);
 }
 
+function clearPoolInventory(pool) {
+  if (!state.inventory || typeof state.inventory !== "object") state.inventory = {};
+  state.inventory[pool.id] = {};
+}
+
 function getRequiredItems(pool) {
   return pool.items.filter(item => item?.id && item?.name);
 }
@@ -867,7 +872,7 @@ function redeemCurrentPool() {
     requestAnimationFrame(() => ticketWindow.classList.add("spin"));
     return;
   }
-  required.forEach(item => spendInventory(pool, item, 1));
+  clearPoolInventory(pool);
   state.history.unshift({
     pool: "兑奖申请",
     item: pool.name,
