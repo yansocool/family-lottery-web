@@ -3,12 +3,12 @@ const cloudRowId = "main";
 const maxPoolImageSize = 1200;
 const poolImageQuality = 0.86;
 const defaultPoolImages = {
-  "sky-city": "assets/sky-city-default.png",
-  "zhou-dachu": "assets/zhou-dachu-default.png",
-  "keyboard": "assets/keyboard-default.png",
-  "xuanka": "assets/xuanka-default.png",
-  "drone": "assets/drone-default.png",
-  "tank": "assets/tank-default.png"
+  "sky-city": "assets/sky-city-banner.jpg",
+  "zhou-dachu": "assets/zhou-dachu-banner.jpg",
+  "keyboard": "assets/keyboard-banner.jpg",
+  "xuanka": "assets/xuanka-banner.jpg",
+  "drone": "assets/drone-banner.jpg",
+  "tank": "assets/tank-banner.jpg"
 };
 
 // Fill these after creating the Supabase project.
@@ -206,6 +206,9 @@ function normalizeState(value) {
     if (!Array.isArray(pool.items)) pool.items = [];
     if (typeof pool.imageData !== "string") pool.imageData = "";
     if (typeof pool.imageUrl !== "string") pool.imageUrl = "";
+    if (!pool.imageData && pool.imageUrl.endsWith("-default.png") && defaultPoolImages[pool.id]) {
+      pool.imageUrl = defaultPoolImages[pool.id];
+    }
     if (!pool.imageData && !pool.imageUrl && !pool.imageRemoved && defaultPoolImages[pool.id]) {
       pool.imageUrl = defaultPoolImages[pool.id];
     }
